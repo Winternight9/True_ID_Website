@@ -67,7 +67,7 @@ async function navigateNext(page: any, prevUrl: string, timeoutMs = 8000): Promi
     // ถ้า URL ไม่เปลี่ยน ลอง scroll แทน
     await page.evaluate(() => window.scrollBy(0, 400));
     await page.waitForTimeout(2000);
-    return window.location.href !== prevUrl;
+    return page.url() !== prevUrl; // ต้องใช้ page.url() เพราะ block นี้รันใน Node.js ไม่ใช่ใน browser
   }
 }
 
