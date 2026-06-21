@@ -7,59 +7,19 @@
  * Usage: node scripts/generate-step-summary.js
  */
 
-const fs = require('fs');
-const path = require('path');
+const { loadResults, summarize, ICON, fmtMs } = require('./lib/parse-playwright-results');
 
-const RESULTS_FILE = path.resolve('test-results/results.json');
 const SUMMARY_FILE = process.env.GITHUB_STEP_SUMMARY;
 
-if (!fs.existsSync(RESULTS_FILE)) {
-  console.error(`❌ ไม่พบไฟล์ ${RESULTS_FILE} — ต้องรัน "npx playwright test" ก่อน`);
+let data;
+try {
+  data = loadResults();
+} catch (err) {
+  console.error(`❌ ${err.message}`);
   process.exit(1);
 }
 
-const data = JSON.parse(fs.readFileSync(RESULTS_FILE, 'utf8'));
-const { stats } = data;
-
-/** เดินไล่ suites แบบ recursive เก็บ test case ทั้งหมดออกมาเป็น flat list */
-function collectCases(suites, parentTitles = []) {
-  const cases = [];
-  for (const suite of suites || []) {
-    const titles = suite.title ? [...parentTitles, suite.title] : parentTitles;
-    for (const spec of suite.specs || []) {
-      for (const test of spec.tests || []) {
-        const results = test.results || [];
-        const last = results[results.length - 1] || {};
-        const status =
-          results.length > 1 && last.status === 'passed'
-            ? 'flaky'
-            : last.status || 'skipped';
-        const duration = results.reduce((sum, r) => sum + (r.duration || 0), 0);
-        cases.push({
-          group: titles.join(' › '),
-          title: spec.title,
-          status,
-          retries: Math.max(0, results.length - 1),
-          durationMs: duration,
-          projectName: test.projectName || '',
-          errorMessage: last.error?.message?.split('\n')[0] || '',
-        });
-      }
-    }
-    cases.push(...collectCases(suite.suites, titles));
-  }
-  return cases;
-}
-
-const cases = collectCases(data.suites);
-
-const ICON = { passed: '✅', failed: '❌', timedOut: '⏱️', flaky: '⚠️', skipped: '⏭️', interrupted: '❌' };
-const fmtMs = (ms) => `${(ms / 1000).toFixed(1)}s`;
-
-const passCount = cases.filter((c) => c.status === 'passed').length;
-const flakyCount = cases.filter((c) => c.status === 'flaky').length;
-const failCount = cases.filter((c) => !['passed', 'flaky', 'skipped'].includes(c.status)).length;
-const skipCount = cases.filter((c) => c.status === 'skipped').length;
+const { cases, stats, passCount, flakyCount, failCount, skipCount } = summarize(data);
 
 const lines = [];
 lines.push(`## 🎭 Playwright Test Report — ${new Date(stats.startTime).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`);
@@ -100,7 +60,7 @@ if (withErrors.length) {
 const markdown = lines.join('\n') + '\n';
 
 if (SUMMARY_FILE) {
-  fs.appendFileSync(SUMMARY_FILE, markdown);
+  require('fs').appendFileSync(SUMMARY_FILE, markdown);
   console.log(`✅ เขียน step summary ไปที่ ${SUMMARY_FILE}`);
 } else {
   console.log(markdown);

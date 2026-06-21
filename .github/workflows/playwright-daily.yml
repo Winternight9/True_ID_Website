@@ -36,6 +36,13 @@ jobs:
         if: always()
         run: node scripts/generate-step-summary.js
 
+      - name: Send Discord report
+        if: always()
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: node scripts/send-discord-report.js
+
       - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4
