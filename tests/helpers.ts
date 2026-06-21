@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { Page, expect, test } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -26,6 +26,24 @@ export async function dismissSiteCover(page: Page) {
   if (visible) {
     await enterBtn.click({ force: true }).catch(() => {});
     await page.waitForTimeout(800);
+  }
+}
+
+// www.trueid.net อยู่หลัง Incapsula (Imperva) WAF ซึ่งมัก challenge/block
+// request ที่มาจาก cloud/datacenter IP (เช่น GitHub Actions hosted runner)
+// แล้ว redirect ไปหน้า /_Incapsula_Resource แทนหน้าจริง — ไม่ใช่ bug ของเว็บ
+// หรือของ test เลย แต่เป็นข้อจำกัดของ network ที่รัน CI อยู่
+// เรียกใช้หลัง page.goto() ไปหน้าที่สงสัยว่าจะถูกบล็อก เพื่อ skip แบบมีเหตุผล
+// ชัดเจน ดีกว่าให้ assertion timeout แล้วโผล่เป็น "failed" ที่ทำให้เข้าใจผิด
+export async function skipIfBlockedByWAF(page: Page, label: string) {
+  const url = page.url();
+  const blocked = url.includes('_Incapsula_Resource') || url.includes('Incapsula');
+  if (blocked) {
+    test.skip(
+      true,
+      `⚠️ ${label} ถูก Incapsula WAF บล็อก (พบ "_Incapsula_Resource" ใน URL) — ` +
+        `มักเกิดกับ cloud/datacenter IP เช่น GitHub Actions runner ไม่ใช่ความผิดของเว็บหรือ test`
+    );
   }
 }
 

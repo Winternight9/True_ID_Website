@@ -10,7 +10,7 @@
 import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
-import { dismissSiteCover } from './helpers';
+import { dismissSiteCover, skipIfBlockedByWAF } from './helpers';
 
 const HOME_URL     = 'https://www.trueid.net/th-th';
 const KEYWORD      = 'ชินจัง';
@@ -21,6 +21,9 @@ test('ค้นหา "ชินจัง" แล้วเก็บ ID ของ
   // ── 1. เปิดหน้าหลัก ────────────────────────────────────────────────────
   await page.goto(HOME_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForTimeout(2000);
+
+  // ── 1a. skip ถ้าโดน Incapsula WAF บล็อก (พบบ่อยจาก cloud IP เช่น GitHub Actions) ──
+  await skipIfBlockedByWAF(page, 'หน้าหลัก TrueID');
 
   // ── 1b. ปิด splash/cover overlay ถ้ามี (เช่น หน้าไว้อาลัย) ─────────────────
   await dismissSiteCover(page);
@@ -55,6 +58,7 @@ test('ค้นหา "ชินจัง" แล้วเก็บ ID ของ
 
   // รอ SSR content render
   await page.waitForTimeout(4000);
+  await skipIfBlockedByWAF(page, 'หน้าค้นหา TrueID');
 
   // ── 5. Screenshot ────────────────────────────────────────────────────────
   const ssDir = path.resolve('test-results/screenshots');

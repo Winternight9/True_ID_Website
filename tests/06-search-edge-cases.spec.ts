@@ -12,7 +12,7 @@
 import { test, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
-import { dismissSiteCover } from './helpers';
+import { dismissSiteCover, skipIfBlockedByWAF } from './helpers';
 
 const HOME_URL  = 'https://www.trueid.net/th-th';
 const GAME_URL  = 'https://game.trueid.net/th-th';
@@ -34,6 +34,7 @@ async function dismissCookie(page: Page) {
 async function searchTrueID(page: Page, keyword: string) {
   await page.goto(HOME_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForTimeout(2000);
+  await skipIfBlockedByWAF(page, 'หน้าหลัก TrueID');
   await dismissSiteCover(page);
   await dismissCookie(page);
 
@@ -65,6 +66,7 @@ async function searchTrueID(page: Page, keyword: string) {
     const searchUrl = `${HOME_URL.replace(/\/th-th\/?$/, '')}/th-th/search/${encodeURIComponent(keyword)}?tab=today`;
     await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.waitForTimeout(3000);
+    await skipIfBlockedByWAF(page, 'หน้าค้นหา TrueID');
     navigated = page.url().includes('/search');
   }
 
