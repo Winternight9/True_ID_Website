@@ -113,7 +113,13 @@ async function searchGame(page: Page, keyword: string) {
     if (!res.url().includes('search') || res.status() !== 200) return;
     try {
       const body = res.request().postData() || '';
-      const urlHas = res.url().toLowerCase().includes(keyword.toLowerCase());
+      // res.url() เป็น URL ที่ encode แล้ว (เช่น ภาษาไทยจะกลายเป็น %E0%B8%... ตาม
+      // WHATWG URL spec) เทียบกับ keyword ดิบๆ ตรงๆ จะไม่ match กันเลยสำหรับคำค้นหา
+      // ที่มีภาษาไทย (เช่น "แอคชั่น") ทำให้ response ถูกข้ามไปเข้าใจผิดว่าไม่มีผลลัพธ์
+      // ต้อง decode URL ก่อนเทียบ — ใส่ fallback เผื่อ decode พังจาก malformed sequence
+      let decodedUrl = res.url();
+      try { decodedUrl = decodeURIComponent(decodedUrl); } catch {}
+      const urlHas = decodedUrl.toLowerCase().includes(keyword.toLowerCase());
       const bodyHas = keyword ? body.toLowerCase().includes(keyword.toLowerCase()) : false;
       if (!urlHas && !bodyHas && keyword) return;
       const json = await res.json();
