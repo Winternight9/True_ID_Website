@@ -1,0 +1,22 @@
+{
+  "name": "playwright_trueid",
+  "version": "1.0.0",
+  "description": "TrueID automated visual + element checks",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "report": "npx playwright show-report",
+    "check": "npx playwright test && node scripts/generate-report.js",
+    "shelf:ids": "node scripts/extract-shelf-ids.js",
+    "shelf:game-ids": "node scripts/extract-game-shelf-ids.js",
+    "inspect": "node scripts/inspect-selectors.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.0"
+  }
+}

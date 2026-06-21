@@ -1,0 +1,378 @@
+{
+  "sfv-player": {
+    "url": "https://www.trueid.net/watch/th-th/short/Game",
+    "playerClasses": [
+      {
+        "tag": "DIV",
+        "classes": "pagestyle__ContainerSFV-sc-jxlgsi-0 iTmpfv",
+        "id": "container-sfv"
+      },
+      {
+        "tag": "DIV",
+        "classes": "style__SFVLayoutWrapper-sc-1qq5x3a-3 juHzDD",
+        "id": ""
+      },
+      {
+        "tag": "DIV",
+        "classes": "style__SFVLeftContentWrapper-sc-1qq5x3a-4 eRnKTO",
+        "id": ""
+      },
+      {
+        "tag": "DIV",
+        "classes": "style__SFVMainContentWrapper-sc-1qq5x3a-5 ktBfaE",
+        "id": ""
+      },
+      {
+        "tag": "DIV",
+        "classes": "style__SFVMainWrapper-sc-1qq5x3a-7 jYGrlP",
+        "id": ""
+      },
+      {
+        "tag": "DIV",
+        "classes": "style__SFVPlayerWrapper-sc-1nf8ys4-0 cIBSiG",
+        "id": ""
+      },
+      {
+        "tag": "DIV",
+        "classes": "style__SFVPlayerVideoWrapper-sc-1nf8ys4-1 duqltT",
+        "id": ""
+      },
+      {
+        "tag": "VIDEO-JS",
+        "classes": "vjs-big-play-centered video-js mWA7bong2bOK-dimensions vjs-fluid vjs-controls-enabled vjs-workinghover vjs-v7 vjs-layout-small vjs-playing vjs-has-started vjs-user-inactive",
+        "id": "mWA7bong2bOK"
+      }
+    ],
+    "cardClasses": [
+      "style__SFVLeftContentWrapper-sc-1qq5x3a-4",
+      "style__SFVMainContentWrapper-sc-1qq5x3a-5",
+      "vjs-menu-content",
+      "vjs-menu-item",
+      "vjs-menu-item-text",
+      "vjs-main-menu-item",
+      "vjs-modal-dialog-content",
+      "style__CardTitleContent-sc-bew1t-0",
+      "content-detail",
+      "shelves-content",
+      "style__CardCTAPopup-sc-av54pr-0",
+      "style__CTAThumb-sc-av54pr-4",
+      "style__CTAContent-sc-av54pr-7",
+      "style__SFVRightContentWrapper-sc-1qq5x3a-6"
+    ],
+    "searchEls": [
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "classes": "sc-cLFqLo NjWmA",
+        "ariaLabel": null,
+        "placeholder": "ค้นหา",
+        "id": ""
+      }
+    ],
+    "headings": [],
+    "formEls": [
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "sc-gkJlnC bNFcyX",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "sc-fXynhf hwpzyE",
+        "text": "เข้าสู่ระบบ"
+      },
+      {
+        "tag": "FORM",
+        "type": null,
+        "classes": "sc-elYLMi jiQPNE",
+        "text": "รีเซต"
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "classes": "sc-cLFqLo NjWmA",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "classes": "vjs-big-play-button",
+        "text": "Play Video"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "classes": "vjs-play-control vjs-control vjs-button vjs-playing",
+        "text": "Pause"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "classes": "vjs-mute-control vjs-control vjs-button vjs-vol-0",
+        "text": "Unmute"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "classes": "vjs-seek-to-live-control vjs-control",
+        "text": "Seek to live, currently behind liveLIVE"
+      }
+    ],
+    "finalUrl": "https://www.trueid.net/watch/th-th/short/mWA7bong2bOK",
+    "title": "เมื่อสามเณรเคลียร์ใจกัน - TrueID Shorts",
+    "bodyTextLength": 422
+  },
+  "game-shelf": {
+    "url": "https://game.trueid.net/th-th/shelf",
+    "playerClasses": [],
+    "cardClasses": [],
+    "searchEls": [
+      {
+        "tag": "SPAN",
+        "type": null,
+        "classes": "anticon anticon-search sc-6fde5a67-1 dDzPiW",
+        "ariaLabel": "search",
+        "placeholder": null,
+        "id": ""
+      }
+    ],
+    "headings": [],
+    "formEls": [
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "sc-1f2a201c-15 gpeCXk",
+        "text": "เข้าสู่ระบบ"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "classes": "sc-1f2a201c-20 iNDqtu",
+        "text": "TH"
+      },
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "sc-d0763205-0 hHiuWV",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "classes": "ant-btn css-1uim6jf ant-btn-default ant-btn-color-default ant-btn-variant-outlined sc-40be005c-0 sc-273ca5dc-4 bZOhWn kZzyTK",
+        "text": "กลับสู่หน้าแรก"
+      }
+    ],
+    "finalUrl": "https://game.trueid.net/th-th/shelf",
+    "title": "ไม่พบข้อมูล - ทรูไอดี เกมฮับ",
+    "bodyTextLength": 346
+  },
+  "watch-header": {
+    "url": "https://www.trueid.net/watch/th-th/shelf",
+    "playerClasses": [],
+    "cardClasses": [
+      "ot-cat-item",
+      "vertical-align-content"
+    ],
+    "searchEls": [
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "classes": "sc-cLFqLo NjWmA",
+        "ariaLabel": null,
+        "placeholder": "ค้นหา",
+        "id": ""
+      },
+      {
+        "tag": "DIV",
+        "type": null,
+        "classes": "ot-search-cntr",
+        "ariaLabel": null,
+        "placeholder": null,
+        "id": ""
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "classes": "",
+        "ariaLabel": null,
+        "placeholder": "Search...",
+        "id": "vendor-search-handler"
+      }
+    ],
+    "headings": [],
+    "formEls": [
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "sc-gkJlnC bNFcyX",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "sc-gITdmR bytHxS",
+        "text": "เข้าสู่ระบบ"
+      },
+      {
+        "tag": "FORM",
+        "type": null,
+        "classes": "sc-elYLMi jiQPNE",
+        "text": "รีเซต"
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "classes": "sc-cLFqLo NjWmA",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "ot-close-icon",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "",
+        "text": "อนุญาตทั้งหมด"
+      },
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "",
+        "text": ""
+      }
+    ],
+    "finalUrl": "https://www.trueid.net/watch/th-th/shelf",
+    "title": "",
+    "bodyTextLength": 715
+  },
+  "game-search-home": {
+    "url": "https://game.trueid.net/th-th/searchHome",
+    "playerClasses": [],
+    "cardClasses": [],
+    "searchEls": [
+      {
+        "tag": "SPAN",
+        "type": null,
+        "classes": "anticon anticon-search sc-6fde5a67-1 dDzPiW",
+        "ariaLabel": "search",
+        "placeholder": null,
+        "id": ""
+      }
+    ],
+    "headings": [],
+    "formEls": [
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "sc-1f2a201c-15 gpeCXk",
+        "text": "เข้าสู่ระบบ"
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "classes": "sc-1f2a201c-20 iNDqtu",
+        "text": "TH"
+      },
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "sc-d0763205-0 hHiuWV",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": "button",
+        "classes": "ant-btn css-1uim6jf ant-btn-default ant-btn-color-default ant-btn-variant-outlined sc-40be005c-0 sc-273ca5dc-4 bZOhWn kZzyTK",
+        "text": "กลับสู่หน้าแรก"
+      }
+    ],
+    "finalUrl": "https://game.trueid.net/th-th/searchHome",
+    "title": "ไม่พบข้อมูล - ทรูไอดี เกมฮับ",
+    "bodyTextLength": 346
+  },
+  "ugc-upload": {
+    "url": "https://www.trueid-alpha.net/creators/th-th/upload",
+    "playerClasses": [],
+    "cardClasses": [
+      "style__GridLayout-sc-i7x6qg-0",
+      "style__Content-sc-i7x6qg-4",
+      "style__LoginHeaderContent-sc-1ps4muz-8"
+    ],
+    "searchEls": [
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "classes": "sc-jWUzzU OkbuF",
+        "ariaLabel": null,
+        "placeholder": "ค้นหา",
+        "id": ""
+      }
+    ],
+    "headings": [],
+    "formEls": [
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "sc-uojGG qeNbC",
+        "text": ""
+      },
+      {
+        "tag": "BUTTON",
+        "type": null,
+        "classes": "sc-fWCJzd hICWGj",
+        "text": "เข้าสู่ระบบ"
+      },
+      {
+        "tag": "FORM",
+        "type": null,
+        "classes": "sc-fXEqDS foCMjl",
+        "text": "รีเซต"
+      },
+      {
+        "tag": "INPUT",
+        "type": "search",
+        "classes": "sc-jWUzzU OkbuF",
+        "text": ""
+      },
+      {
+        "tag": "HEADER",
+        "type": null,
+        "classes": "style__LoginHeaderBox-sc-1ps4muz-7 ihDtVR",
+        "text": ""
+      },
+      {
+        "tag": "DIV",
+        "type": null,
+        "classes": "style__LoginHeaderContent-sc-1ps4muz-8 cqNBDG",
+        "text": ""
+      },
+      {
+        "tag": "SECTION",
+        "type": null,
+        "classes": "style__LoginFormBox-sc-1ps4muz-0 dEUOIk",
+        "text": "เข้าสู่ระบบเข้าสู่ระบบโดยบัญชี ทรูไอดีเป"
+      },
+      {
+        "tag": "H1",
+        "type": null,
+        "classes": "style__LoginTitle-sc-1ps4muz-1 eTTjBT",
+        "text": "เข้าสู่ระบบ"
+      }
+    ],
+    "finalUrl": "https://www.trueid-alpha.net/creators/th-th/login?redirect_url=/upload",
+    "title": "",
+    "bodyTextLength": 66
+  }
+}

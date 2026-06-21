@@ -1,0 +1,74 @@
+name: Playwright Daily Tests
+
+on:
+  schedule:
+    # 07:00 ICT (Asia/Bangkok) = 00:00 UTC ทุกวัน
+    - cron: '0 0 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        id: run_tests
+        run: npx playwright test
+        continue-on-error: true
+
+      - name: Write test case summary
+        if: always()
+        run: node scripts/generate-step-summary.js
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload test-results (screenshots, raw json)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 14
+
+      - name: Open issue on failure
+        if: steps.run_tests.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('test-results/results.json', 'utf8'));
+            const { stats } = data;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔴 Playwright daily run failed — ${new Date().toISOString().slice(0, 10)}`,
+              body: `**${stats.unexpected} failed**, ${stats.flaky} flaky, ${stats.expected} passed out of ${stats.expected + stats.unexpected + stats.flaky} tests.\n\nดูรายละเอียดและ screenshot ที่ [Actions run](${runUrl}) → ดาวน์โหลด artifact \`playwright-report\` หรือ \`test-results\`.`,
+              labels: ['playwright', 'ci-failure'],
+            });
+
+      - name: Fail job if tests failed
+        if: steps.run_tests.outcome == 'failure'
+        run: exit 1
