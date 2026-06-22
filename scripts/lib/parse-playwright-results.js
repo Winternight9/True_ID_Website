@@ -33,10 +33,16 @@ function collectCases(suites, parentTitles = []) {
             ? 'flaky'
             : last.status || 'skipped';
         const duration = results.reduce((sum, r) => sum + (r.duration || 0), 0);
-        const annotations = [...(test.annotations || []), ...(last.annotations || [])];
+        const annotations = [
+          ...(test.annotations || []),
+          ...results.flatMap((r) => r.annotations || []),
+        ];
         const skipReason =
           annotations.find((a) => a.type === 'skip' && a.description)?.description || '';
-        const errorMessage = last.error?.message?.split('\n')[0] || '';
+        const allErrorMessages = results
+          .map((r) => r.error?.message?.split('\n')[0] || '')
+          .filter(Boolean);
+        const errorMessage = allErrorMessages[allErrorMessages.length - 1] || '';
         cases.push({
           group: titles.join(' › '),
           title: spec.title,
@@ -46,7 +52,7 @@ function collectCases(suites, parentTitles = []) {
           projectName: test.projectName || '',
           errorMessage,
           skipReason,
-          wafBlocked: looksLikeWafBlock(`${skipReason}\n${errorMessage}`),
+          wafBlocked: looksLikeWafBlock(`${skipReason}\n${allErrorMessages.join('\n')}`),
         });
       }
     }

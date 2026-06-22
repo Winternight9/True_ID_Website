@@ -48,6 +48,15 @@ export async function skipWithEvidence(page: Page, label: string, reason: string
     contentType: 'application/json',
   }).catch(() => {});
 
+  const info = test.info();
+  const shouldRetryWaf = process.env.CI && info.retry === 0;
+  if (shouldRetryWaf) {
+    const delayMs = Number(process.env.WAF_RETRY_DELAY_MS || 10000);
+    console.warn(`  🛡️ WAF/soft-block evidence captured for "${label}" — retrying once after ${delayMs}ms`);
+    await page.waitForTimeout(delayMs).catch(() => {});
+    throw new Error(`WAF_RETRY: ${reason}`);
+  }
+
   test.skip(true, reason);
 }
 
@@ -113,12 +122,19 @@ export async function dismissSiteCover(page: Page) {
 // ชัดเจน ดีกว่าให้ assertion timeout แล้วโผล่เป็น "failed" ที่ทำให้เข้าใจผิด
 export async function skipIfBlockedByWAF(page: Page, label: string) {
   const url = page.url();
-  const blocked = url.includes('_Incapsula_Resource') || url.includes('Incapsula');
+  let bodyText = '';
+  try {
+    bodyText = await page.locator('body').innerText({ timeout: 2000 });
+  } catch {}
+  const blocked =
+    url.includes('_Incapsula_Resource') ||
+    url.includes('Incapsula') ||
+    /Access Denied|Error 17|blocked by our security service|Incident ID|Proxy IP/i.test(bodyText);
   if (blocked) {
     await skipWithEvidence(
       page,
       label,
-      `⚠️ ${label} ถูก Incapsula WAF บล็อก (พบ "_Incapsula_Resource" ใน URL) — ` +
+      `⚠️ ${label} ถูก Incapsula/Imperva WAF บล็อก (พบ Access Denied/Error 17 หรือ "_Incapsula_Resource") — ` +
         `มักเกิดกับ cloud/datacenter IP เช่น GitHub Actions runner ไม่ใช่ความผิดของเว็บหรือ test`
     );
   }
