@@ -19,7 +19,7 @@ try {
   process.exit(1);
 }
 
-const { cases, stats, passCount, flakyCount, failCount, skipCount } = summarize(data);
+const { cases, stats, passCount, flakyCount, failCount, skipCount, wafBlockedCount } = summarize(data);
 
 const lines = [];
 lines.push(`## 🎭 Playwright Test Report — ${new Date(stats.startTime).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`);
@@ -28,7 +28,8 @@ lines.push(
   `**${passCount + flakyCount}/${cases.length} passed** · ⏱️ ${fmtMs(stats.duration)} total` +
     (failCount ? ` · ❌ ${failCount} failed` : '') +
     (flakyCount ? ` · ⚠️ ${flakyCount} flaky` : '') +
-    (skipCount ? ` · ⏭️ ${skipCount} skipped` : '')
+    (skipCount ? ` · ⏭️ ${skipCount} skipped` : '') +
+    (wafBlockedCount ? ` · 🛡️ ${wafBlockedCount} WAF/soft-block suspected` : '')
 );
 lines.push('');
 lines.push('| Status | Test case | Group | Duration | Retries |');
@@ -54,6 +55,36 @@ if (withErrors.length) {
     lines.push(c.errorMessage);
     lines.push('```');
     lines.push('</details>');
+  }
+}
+
+const skippedCases = cases.filter((c) => c.status === 'skipped');
+if (skippedCases.length) {
+  lines.push('');
+  lines.push('### Skipped details');
+  lines.push('');
+  for (const c of skippedCases) {
+    lines.push(`<details><summary>${ICON[c.status] || '❔'} ${c.title}</summary>`);
+    lines.push('');
+    lines.push(c.skipReason || 'No skip reason recorded.');
+    lines.push('');
+    lines.push(`Group: ${c.group}`);
+    lines.push('</details>');
+  }
+}
+
+const wafBlockedCases = cases.filter((c) => c.wafBlocked);
+if (wafBlockedCases.length) {
+  lines.push('');
+  lines.push('### WAF / Soft-Block Signals');
+  lines.push('');
+  lines.push(
+    'These cases look environment-related on GitHub-hosted runners, usually from Incapsula/Imperva WAF, ' +
+      'datacenter IP reputation, or degraded SSR/API content. They are logged separately from product regressions.'
+  );
+  lines.push('');
+  for (const c of wafBlockedCases) {
+    lines.push(`- **${c.title}** — ${c.skipReason || c.errorMessage || 'No reason recorded.'}`);
   }
 }
 

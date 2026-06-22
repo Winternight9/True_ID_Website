@@ -15,6 +15,10 @@ function loadResults(resultsFile = path.resolve('test-results/results.json')) {
   return JSON.parse(fs.readFileSync(resultsFile, 'utf8'));
 }
 
+function looksLikeWafBlock(text = '') {
+  return /incapsula|imperva|waf|soft-block|datacenter|cloud ip|page\.goto timeout|_Incapsula_Resource/i.test(text);
+}
+
 /** เดินไล่ suites แบบ recursive เก็บ test case ทั้งหมดออกมาเป็น flat list */
 function collectCases(suites, parentTitles = []) {
   const cases = [];
@@ -29,6 +33,10 @@ function collectCases(suites, parentTitles = []) {
             ? 'flaky'
             : last.status || 'skipped';
         const duration = results.reduce((sum, r) => sum + (r.duration || 0), 0);
+        const annotations = [...(test.annotations || []), ...(last.annotations || [])];
+        const skipReason =
+          annotations.find((a) => a.type === 'skip' && a.description)?.description || '';
+        const errorMessage = last.error?.message?.split('\n')[0] || '';
         cases.push({
           group: titles.join(' › '),
           title: spec.title,
@@ -36,7 +44,9 @@ function collectCases(suites, parentTitles = []) {
           retries: Math.max(0, results.length - 1),
           durationMs: duration,
           projectName: test.projectName || '',
-          errorMessage: last.error?.message?.split('\n')[0] || '',
+          errorMessage,
+          skipReason,
+          wafBlocked: looksLikeWafBlock(`${skipReason}\n${errorMessage}`),
         });
       }
     }
@@ -51,7 +61,8 @@ function summarize(data) {
   const flakyCount = cases.filter((c) => c.status === 'flaky').length;
   const failCount = cases.filter((c) => !['passed', 'flaky', 'skipped'].includes(c.status)).length;
   const skipCount = cases.filter((c) => c.status === 'skipped').length;
-  return { cases, stats: data.stats, passCount, flakyCount, failCount, skipCount };
+  const wafBlockedCount = cases.filter((c) => c.wafBlocked).length;
+  return { cases, stats: data.stats, passCount, flakyCount, failCount, skipCount, wafBlockedCount };
 }
 
 const ICON = { passed: '✅', failed: '❌', timedOut: '⏱️', flaky: '⚠️', skipped: '⏭️', interrupted: '❌' };

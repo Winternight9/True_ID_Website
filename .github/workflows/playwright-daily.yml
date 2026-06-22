@@ -27,6 +27,40 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Record runner network context
+        continue-on-error: true
+        run: |
+          mkdir -p test-results
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          async function main() {
+            let publicIp = 'unknown';
+            try {
+              const res = await fetch('https://api.ipify.org?format=json');
+              publicIp = (await res.json()).ip || publicIp;
+            } catch {}
+
+            const data = {
+              publicIp,
+              runnerName: process.env.RUNNER_NAME || '',
+              runnerOs: process.env.RUNNER_OS || '',
+              runnerArch: process.env.RUNNER_ARCH || '',
+              githubRunId: process.env.GITHUB_RUN_ID || '',
+              githubRepository: process.env.GITHUB_REPOSITORY || '',
+              capturedAt: new Date().toISOString(),
+            };
+            fs.writeFileSync(
+              path.resolve('test-results/runner-network.json'),
+              JSON.stringify(data, null, 2)
+            );
+            console.log(JSON.stringify(data, null, 2));
+          }
+
+          main();
+          NODE
+
       - name: Run Playwright tests
         id: run_tests
         run: npx playwright test --workers=1
