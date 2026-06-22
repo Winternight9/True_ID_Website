@@ -29,11 +29,12 @@ jobs:
 
       - name: Run Playwright tests
         id: run_tests
-        run: npx playwright test
+        run: npx playwright test --workers=1
         continue-on-error: true
 
       - name: Write test case summary
         if: always()
+        continue-on-error: true
         run: node scripts/generate-step-summary.js
 
       - name: Send Discord report
