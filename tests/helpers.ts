@@ -3,6 +3,53 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export const SCREENSHOTS_DIR = path.resolve('screenshots');
+export const WAF_EVIDENCE_DIR = path.resolve('test-results/waf-evidence');
+
+function safeFilePart(value: string) {
+  return value
+    .replace(/[^\w.-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80) || 'evidence';
+}
+
+export async function skipWithEvidence(page: Page, label: string, reason: string) {
+  if (!fs.existsSync(WAF_EVIDENCE_DIR)) fs.mkdirSync(WAF_EVIDENCE_DIR, { recursive: true });
+
+  const ts = new Date().toISOString().replace(/[:.]/g, '-');
+  const base = `${ts}-${safeFilePart(label)}`;
+  const screenshotPath = path.join(WAF_EVIDENCE_DIR, `${base}.png`);
+  const metaPath = path.join(WAF_EVIDENCE_DIR, `${base}.json`);
+
+  let title = '';
+  try {
+    title = await page.title();
+  } catch {}
+
+  try {
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+    await test.info().attach(`WAF evidence screenshot - ${label}`, {
+      path: screenshotPath,
+      contentType: 'image/png',
+    });
+  } catch {}
+
+  const meta = {
+    label,
+    reason,
+    url: page.url(),
+    title,
+    capturedAt: new Date().toISOString(),
+  };
+
+  fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
+  await test.info().attach(`WAF evidence meta - ${label}`, {
+    path: metaPath,
+    contentType: 'application/json',
+  }).catch(() => {});
+
+  test.skip(true, reason);
+}
 
 // บางครั้ง page.goto() ไม่ resolve เลยภายใน 30s (ไม่ใช่แค่ content หาย แต่ navigation
 // ทั้งหน้าค้าง) — เข้าข่าย Incapsula WAF บล็อกระดับ network (เช่น challenge/TLS หน่วงนาน)
@@ -12,8 +59,9 @@ export async function gotoAndWait(page: Page, url: string, waitMs = 4000, label?
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
   } catch {
-    test.skip(
-      true,
+    await skipWithEvidence(
+      page,
+      label || url,
       `⚠️ ${label || url} โหลดไม่สำเร็จภายใน 30s (page.goto timeout) — เข้าข่าย Incapsula WAF ` +
         'บล็อกระดับ network บน cloud/datacenter IP เช่น GitHub Actions runner ไม่ใช่ความผิดของเว็บหรือ test'
     );
@@ -28,8 +76,9 @@ export async function gotoOrSkip(page: Page, url: string, label: string) {
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
   } catch {
-    test.skip(
-      true,
+    await skipWithEvidence(
+      page,
+      label,
       `⚠️ ${label} โหลดไม่สำเร็จภายใน 30s (page.goto timeout) — เข้าข่าย Incapsula WAF ` +
         'บล็อกระดับ network บน cloud/datacenter IP เช่น GitHub Actions runner ไม่ใช่ความผิดของเว็บหรือ test'
     );
@@ -66,8 +115,9 @@ export async function skipIfBlockedByWAF(page: Page, label: string) {
   const url = page.url();
   const blocked = url.includes('_Incapsula_Resource') || url.includes('Incapsula');
   if (blocked) {
-    test.skip(
-      true,
+    await skipWithEvidence(
+      page,
+      label,
       `⚠️ ${label} ถูก Incapsula WAF บล็อก (พบ "_Incapsula_Resource" ใน URL) — ` +
         `มักเกิดกับ cloud/datacenter IP เช่น GitHub Actions runner ไม่ใช่ความผิดของเว็บหรือ test`
     );

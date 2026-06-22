@@ -12,7 +12,7 @@
 import { test, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
-import { dismissSiteCover, skipIfBlockedByWAF, gotoOrSkip } from './helpers';
+import { dismissSiteCover, skipIfBlockedByWAF, gotoOrSkip, skipWithEvidence } from './helpers';
 
 const HOME_URL  = 'https://www.trueid.net/th-th';
 const GAME_URL  = 'https://game.trueid.net/th-th';
@@ -45,8 +45,9 @@ async function searchTrueID(page: Page, keyword: string) {
     // ช่องค้นหาไม่ขึ้นเลยภายใน 8s ทั้งที่หน้าไม่ได้ redirect ไป _Incapsula_Resource —
     // เข้าข่าย Incapsula soft-block (degraded SSR) บน cloud/datacenter IP เหมือนกับ
     // กรณีหน้า watch/short ไม่ใช่ความผิดของเว็บหรือ test
-    test.skip(
-      true,
+    await skipWithEvidence(
+      page,
+      'ช่องค้นหาบนหน้าหลัก TrueID',
       '⚠️ ช่องค้นหาบนหน้าหลัก TrueID ไม่ render ภายใน 8s — เข้าข่าย Incapsula soft-block ' +
         'บน cloud/datacenter IP ไม่ใช่ความผิดของเว็บหรือ test'
     );

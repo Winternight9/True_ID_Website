@@ -11,7 +11,7 @@
  *   Layout wrapper : [class*="SFVLayoutWrapper"]
  */
 import { test, expect } from '@playwright/test';
-import { gotoAndWait, saveScreenshot, checkVisible, skipIfBlockedByWAF } from './helpers';
+import { gotoAndWait, saveScreenshot, checkVisible, skipIfBlockedByWAF, skipWithEvidence } from './helpers';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -107,8 +107,9 @@ test.describe('SFV Player — Short', () => {
     // cloud/datacenter IP (หน้าโหลดได้ปกติแต่ SSR/API content ไม่มา) ไม่ใช่ความผิดของเว็บ
     // หรือ test — skip แทนที่จะให้ assertion ด้านล่าง fail แบบเข้าใจผิดว่าเป็นบั๊กจริง
     if (!first.videoId || first.videoId === 'short') {
-      test.skip(
-        true,
+      await skipWithEvidence(
+        page,
+        'หน้า SFV Player (short)',
         `⚠️ หน้า SFV Player ไม่ resolve เป็นวิดีโอจริง (videoId="${first.videoId}") — ` +
           'เข้าข่าย Incapsula soft-block บน cloud/datacenter IP ไม่ใช่ความผิดของเว็บหรือ test'
       );

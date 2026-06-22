@@ -9,7 +9,7 @@
  *   Card items  : [class*="CardCTAPopup"]  /  [class*="CTAThumb"]
  */
 import { test, expect } from '@playwright/test';
-import { gotoAndWait, saveScreenshot, checkVisible, checkText } from './helpers';
+import { gotoAndWait, saveScreenshot, checkVisible, checkText, skipWithEvidence } from './helpers';
 
 const URL = 'https://www.trueid.net/watch/th-th';
 
@@ -100,8 +100,9 @@ test.describe('Watch Shelf — คลิปหนังสั้น', () => {
     //     แต่ SSR/API content ไม่มาเลย เข้าข่าย bot-reputation บน cloud IP (เช่น GitHub
     //     Actions runner) ไม่ใช่ความผิดของเว็บหรือ test (ดู skipIfBlockedByWAF ใน helpers.ts)
     if (!found && clipIds.length === 0) {
-      test.skip(
-        true,
+      await skipWithEvidence(
+        page,
+        'หน้า Watch Shelf',
         '⚠️ "คลิปสั้นหนังแนะนำ" shelf ไม่มีเนื้อหาเลย (ไม่เจอ heading + ไม่มี clip ID) — ' +
           'เข้าข่าย Incapsula soft-block บน cloud/datacenter IP ไม่ใช่ความผิดของเว็บหรือ test'
       );
