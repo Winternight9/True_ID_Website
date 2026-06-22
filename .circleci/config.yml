@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test-node:
     docker:
-      - image: cimg/node:lts
+      - image: mcr.microsoft.com/playwright:v1.59.1-noble
     resource_class: large
     steps:
       - checkout
@@ -23,10 +23,6 @@ jobs:
             - ~/.npm
 
       - run:
-          name: Install Playwright Chromium
-          command: npx playwright install --with-deps chromium
-
-      - run:
           name: Record runner network context
           command: node scripts/record-runner-network.js
 
@@ -42,12 +38,14 @@ jobs:
 
       - run:
           name: Write test case summary
-          command: node scripts/generate-step-summary.js > test-results/summary.md
+          command: |
+            mkdir -p test-results
+            node scripts/generate-step-summary.js > test-results/summary.md || true
           when: always
 
       - run:
           name: Send Discord report
-          command: node scripts/send-discord-report.js
+          command: node scripts/send-discord-report.js || true
           when: always
 
       - store_artifacts:
