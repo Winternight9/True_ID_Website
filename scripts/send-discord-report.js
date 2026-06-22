@@ -43,7 +43,18 @@ const headline =
 const runUrl =
   process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID
     ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+    : process.env.CIRCLE_BUILD_URL
+      ? process.env.CIRCLE_BUILD_URL
     : undefined;
+
+const repoName =
+  process.env.GITHUB_REPOSITORY ||
+  (
+    process.env.CIRCLE_PROJECT_USERNAME && process.env.CIRCLE_PROJECT_REPONAME
+      ? `${process.env.CIRCLE_PROJECT_USERNAME}/${process.env.CIRCLE_PROJECT_REPONAME}`
+      : undefined
+  ) ||
+  'True_ID_Website';
 
 const fields = [];
 
@@ -93,7 +104,7 @@ const payload = {
       url: runUrl,
       fields,
       timestamp: new Date(stats.startTime).toISOString(),
-      footer: { text: 'ekanant1412/True_ID_Website' },
+      footer: { text: repoName },
     },
   ],
 };

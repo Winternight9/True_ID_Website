@@ -5,6 +5,9 @@ import * as path from 'path';
 export const SCREENSHOTS_DIR = path.resolve('screenshots');
 export const WAF_EVIDENCE_DIR = path.resolve('test-results/waf-evidence');
 
+const WAF_TEXT_PATTERN =
+  /Access Denied|Error 17|blocked by our security service|Incident ID|Proxy IP|captcha|verify you are human|checking your browser|unusual traffic/i;
+
 function safeFilePart(value: string) {
   return value
     .replace(/[^\w.-]+/g, '-')
@@ -65,18 +68,20 @@ export async function skipWithEvidence(page: Page, label: string, reason: string
 // บน cloud/datacenter IP เช่น GitHub Actions runner ไม่ใช่ความผิดของเว็บหรือ test
 // skip แทนปล่อยให้ throw จน test กลายเป็น "failed"/"flaky" ที่ทำให้เข้าใจผิด
 export async function gotoAndWait(page: Page, url: string, waitMs = 4000, label?: string) {
+  const pageLabel = label || url;
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
   } catch {
     await skipWithEvidence(
       page,
-      label || url,
-      `⚠️ ${label || url} โหลดไม่สำเร็จภายใน 30s (page.goto timeout) — เข้าข่าย Incapsula WAF ` +
+      pageLabel,
+      `⚠️ ${pageLabel} โหลดไม่สำเร็จภายใน 30s (page.goto timeout) — เข้าข่าย Incapsula WAF ` +
         'บล็อกระดับ network บน cloud/datacenter IP เช่น GitHub Actions runner ไม่ใช่ความผิดของเว็บหรือ test'
     );
     return;
   }
   await page.waitForTimeout(waitMs);
+  await skipIfBlockedByWAF(page, pageLabel);
 }
 
 // เวอร์ชันสำหรับจุดที่เรียก page.goto() ตรงๆ (ไม่ผ่าน gotoAndWait) เช่นตอน navigate
@@ -92,6 +97,7 @@ export async function gotoOrSkip(page: Page, url: string, label: string) {
         'บล็อกระดับ network บน cloud/datacenter IP เช่น GitHub Actions runner ไม่ใช่ความผิดของเว็บหรือ test'
     );
   }
+  await skipIfBlockedByWAF(page, label);
 }
 
 export async function saveScreenshot(page: Page, name: string) {
@@ -129,7 +135,7 @@ export async function skipIfBlockedByWAF(page: Page, label: string) {
   const blocked =
     url.includes('_Incapsula_Resource') ||
     url.includes('Incapsula') ||
-    /Access Denied|Error 17|blocked by our security service|Incident ID|Proxy IP/i.test(bodyText);
+    WAF_TEXT_PATTERN.test(bodyText);
   if (blocked) {
     await skipWithEvidence(
       page,
@@ -141,23 +147,15 @@ export async function skipIfBlockedByWAF(page: Page, label: string) {
 }
 
 export async function checkVisible(page: Page, selector: string, label: string) {
-  try {
-    await expect(page.locator(selector).first()).toBeVisible({ timeout: 8000 });
-    console.log(`  ✅ ${label}`);
-    return true;
-  } catch {
-    console.warn(`  ❌ ${label} — not found (selector: ${selector})`);
-    return false;
-  }
+  await skipIfBlockedByWAF(page, label);
+  await expect(page.locator(selector).first(), `${label} — selector: ${selector}`).toBeVisible({ timeout: 8000 });
+  console.log(`  ✅ ${label}`);
+  return true;
 }
 
 export async function checkText(page: Page, text: string, label: string) {
-  try {
-    await expect(page.getByText(text, { exact: false }).first()).toBeVisible({ timeout: 8000 });
-    console.log(`  ✅ ${label}`);
-    return true;
-  } catch {
-    console.warn(`  ❌ ${label} — text "${text}" not visible`);
-    return false;
-  }
+  await skipIfBlockedByWAF(page, label);
+  await expect(page.getByText(text, { exact: false }).first(), `${label} — text: ${text}`).toBeVisible({ timeout: 8000 });
+  console.log(`  ✅ ${label}`);
+  return true;
 }

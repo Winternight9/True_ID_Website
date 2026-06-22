@@ -184,7 +184,11 @@ test.describe('Watch Shelf — คลิปหนังสั้น', () => {
       await saveScreenshot(page, '01-watch-search-popup');
       await checkVisible(page, 'input[placeholder="ค้นหา"], input[type="search"]', 'Search input popup after click');
     } else {
-      console.warn('  ⚠️  Search button not found — skipping popup check');
+      await skipWithEvidence(
+        page,
+        'หน้า Watch Header Search',
+        '⚠️ search input/button ไม่ render — เข้าข่าย Incapsula soft-block บน cloud/datacenter IP ไม่ใช่ความผิดของเว็บหรือ test'
+      );
     }
   });
 });

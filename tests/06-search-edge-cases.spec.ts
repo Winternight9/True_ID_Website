@@ -104,6 +104,7 @@ async function searchTrueID(page: Page, keyword: string) {
     .isVisible({ timeout: 3000 })
     .catch(() => false);
 
+  await skipIfBlockedByWAF(page, `ผลค้นหา TrueID: ${keyword || 'empty keyword'}`);
   return { navigated, items, noResultVisible, url: page.url() };
 }
 
@@ -165,6 +166,7 @@ async function searchGame(page: Page, keyword: string) {
     .isVisible({ timeout: 3000 })
     .catch(() => false);
 
+  await skipIfBlockedByWAF(page, `ผลค้นหา Game TrueID: ${keyword || 'empty keyword'}`);
   return { navigated, apiItems, noResultVisible, url: page.url() };
 }
 
