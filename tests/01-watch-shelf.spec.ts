@@ -129,17 +129,12 @@ test.describe('Watch Shelf — คลิปหนังสั้น', () => {
     fs.writeFileSync(outFile, JSON.stringify({ shelf: 'คลิปสั้นหนังแนะนำ', clips: clipIds, capturedAt: new Date().toISOString() }, null, 2));
     console.log(`  💾 IDs saved: screenshots/watch-shelf-ids_${ts}.json`);
 
-    // 7. Item count — ปกติควรมีอย่างน้อย 5 clips แต่ถ้าน้อยกว่านั้น (ไม่ใช่ 0 — เคส 0 ถูก
-    //    skip ไปแล้วข้างบน) อาจมาจาก network ช้า/lazy-load บน CI ไม่ hard-fail แต่ log
-    //    เตือนไว้เพื่อสังเกต ไม่ให้ environmental flakiness ทำให้ daily run แดงทุกวัน
-    if (clipIds.length < 5) {
-      console.warn(
-        `  ⚠️  พบ clip เพียง ${clipIds.length} ชิ้น (คาดไว้ >= 5) — อาจเกิดจาก network ช้า ` +
-          'หรือ WAF degraded SSR บน CI runner ไม่ fail test แต่ควรสังเกตหากเกิดติดต่อกันหลายวัน'
-      );
-    } else {
-      console.log(`  ✅ พบ ${clipIds.length} clips (>= 5)`);
-    }
+    // 7. Story requirement: shelf ต้องมีอย่างน้อย 5 clips
+    expect(
+      clipIds.length,
+      `"คลิปสั้นหนังแนะนำ" shelf ต้องมีอย่างน้อย 5 clips แต่พบ ${clipIds.length}`
+    ).toBeGreaterThanOrEqual(5);
+    console.log(`  ✅ พบ ${clipIds.length} clips (>= 5)`);
 
     // no duplicate IDs — เป็นสัญญาณบั๊กจริงเสมอไม่ว่า count จะเท่าไหร่ จึงยัง hard-assert
     const dupIds = clipIds.map(c => c.id).filter((id, i, arr) => arr.indexOf(id) !== i);

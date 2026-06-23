@@ -16,7 +16,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const BASE_URL = 'https://www.trueid.net/watch/th-th/short/';
+const WATCH_URL = 'https://www.trueid.net/watch/th-th';
 const TARGET_ITEMS = 20;
+const INVALID_VIDEO_IDS = new Set(['short', 'th-th', 'watch']);
+const PLAYER_SELECTOR = 'video-js, #container-sfv, [class*="SFVPlayerWrapper"], [class*="SFVPlayer"], [class*="SFVLayoutWrapper"]';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -50,25 +53,113 @@ async function collectCurrentItem(page: any) {
   });
 }
 
-/** เลื่อนวิดีโอถัดไปด้วย ArrowDown แล้วรอ URL เปลี่ยน */
-async function navigateNext(page: any, prevUrl: string, timeoutMs = 8000): Promise<boolean> {
-  // กด ArrowDown บน player wrapper หรือ body เพื่อ trigger next video
-  await page.keyboard.press('ArrowDown');
+function isRealShortItem(item: { videoId: string; url: string }) {
+  return Boolean(
+    item.videoId &&
+      !INVALID_VIDEO_IDS.has(item.videoId) &&
+      item.url.includes('/watch/th-th/short/')
+  );
+}
 
-  try {
-    await page.waitForFunction(
-      (prev: string) => window.location.href !== prev,
-      prevUrl,
-      { timeout: timeoutMs }
-    );
-    await page.waitForTimeout(1500); // รอ content โหลด
-    return true;
-  } catch {
-    // ถ้า URL ไม่เปลี่ยน ลอง scroll แทน
-    await page.evaluate(() => window.scrollBy(0, 400));
-    await page.waitForTimeout(2000);
-    return page.url() !== prevUrl; // ต้องใช้ page.url() เพราะ block นี้รันใน Node.js ไม่ใช่ใน browser
+/** เลื่อนวิดีโอถัดไปด้วย ArrowDown แล้วรอ URL เปลี่ยน */
+async function navigateNext(page: any, prevUrl: string, timeoutMs = 3000): Promise<boolean> {
+  const gestures = [
+    async () => page.keyboard.press('ArrowDown'),
+    async () => page.mouse.wheel(0, Math.floor((page.viewportSize()?.height || 900) * 0.9)),
+    async () => page.keyboard.press('PageDown'),
+    async () => page.evaluate(() => window.scrollBy(0, Math.floor(window.innerHeight * 0.9))),
+  ];
+
+  for (const gesture of gestures) {
+    await gesture();
+
+    try {
+      await page.waitForFunction(
+        (prev: string) => window.location.href !== prev,
+        prevUrl,
+        { timeout: timeoutMs }
+      );
+      await page.waitForTimeout(1000); // รอ content โหลดหลัง snap ไป item ถัดไป
+      return true;
+    } catch {
+      if (page.url() !== prevUrl) {
+        await page.waitForTimeout(1000);
+        return true;
+      }
+    }
   }
+
+  return false;
+}
+
+async function waitForResolvedVideo(page: any) {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const item = await collectCurrentItem(page);
+    if (isRealShortItem(item)) {
+      return item;
+    }
+
+    await page.waitForTimeout(1000);
+    await page.click('#container-sfv, [class*="SFVLayoutWrapper"], body').catch(() => {});
+    await page.keyboard.press('ArrowDown').catch(() => {});
+    await page.waitForTimeout(1000);
+  }
+
+  return collectCurrentItem(page);
+}
+
+async function findShortUrlFromWatchShelf(page: any) {
+  await gotoAndWait(page, WATCH_URL, 3000, 'หน้า Watch เพื่อหา short URL');
+
+  for (let i = 0; i < 12; i++) {
+    const shortUrl = await page.evaluate(() => {
+      const link = Array.from(document.querySelectorAll('a[href*="/watch/th-th/short/"]'))
+        .map(a => (a as HTMLAnchorElement).href)
+        .find(href => /\/watch\/th-th\/short\/[^/?#]+/.test(href));
+      return link || '';
+    });
+
+    if (shortUrl) {
+      return shortUrl;
+    }
+
+    await page.evaluate(() => window.scrollBy(0, 500));
+    await page.waitForTimeout(500);
+  }
+
+  return '';
+}
+
+async function openResolvedSfvSession(page: any, label: string) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    await gotoAndWait(page, BASE_URL, 5000, `${label} attempt ${attempt}`);
+    await page.click(`${PLAYER_SELECTOR}, body`).catch(() => {});
+
+    const baseItem = await waitForResolvedVideo(page);
+    if (isRealShortItem(baseItem)) {
+      return baseItem;
+    }
+
+    const shortUrl = await findShortUrlFromWatchShelf(page);
+    if (shortUrl) {
+      await gotoAndWait(page, shortUrl, 5000, `${label} fallback short URL`);
+      await page.click(`${PLAYER_SELECTOR}, body`).catch(() => {});
+
+      const fallbackItem = await waitForResolvedVideo(page);
+      if (isRealShortItem(fallbackItem)) {
+        return fallbackItem;
+      }
+    }
+  }
+
+  const item = await collectCurrentItem(page);
+  await skipWithEvidence(
+    page,
+    label,
+    `⚠️ หน้า SFV Player ไม่ resolve เป็นวิดีโอจริง (videoId="${item.videoId}") — ` +
+      'เข้าข่าย content/API ไม่มา หรือ soft-block ไม่ใช่ผลลัพธ์ที่นำไป assert story ได้'
+  );
+  return item;
 }
 
 // ── tests ─────────────────────────────────────────────────────────────────────
@@ -76,65 +167,69 @@ async function navigateNext(page: any, prevUrl: string, timeoutMs = 8000): Promi
 test.describe('SFV Player — Short', () => {
 
   test('video player element is present', async ({ page }) => {
-    await gotoAndWait(page, BASE_URL, 6000, 'หน้า SFV Player (short)');
+    await openResolvedSfvSession(page, 'หน้า SFV Player (short)');
     await skipIfBlockedByWAF(page, 'หน้า SFV Player (short)');
     await saveScreenshot(page, '02-sfv-player-full');
 
-    await checkVisible(
-      page,
-      'video-js, #container-sfv, [class*="SFVPlayerWrapper"], [class*="SFVPlayer"], [class*="SFVLayoutWrapper"]',
-      'Video player element'
-    );
-    await checkVisible(page, 'img', 'Images/thumbnails present');
+    await checkVisible(page, PLAYER_SELECTOR, 'Video player element');
   });
 
   test('เลื่อนเปลี่ยนวิดีโอ 20 items — ไม่ซ้ำ และ type ถูกต้อง', async ({ page }) => {
-    await gotoAndWait(page, BASE_URL, 6000, 'หน้า SFV Player (short)');
-    await skipIfBlockedByWAF(page, 'หน้า SFV Player (short)');
-
-    // โฟกัสที่ player ก่อนกด keyboard
-    await page.click('#container-sfv, [class*="SFVLayoutWrapper"], body');
+    test.setTimeout(180000);
 
     const items: { videoId: string; title: string; type: string; url: string }[] = [];
     const seenIds = new Set<string>();
     const seenUrls = new Set<string>();
 
-    // เก็บ item แรก
-    const first = await collectCurrentItem(page);
-
-    // ถ้า videoId เป็น "short" (literal path segment ของ BASE_URL เอง ไม่ใช่ ID จริง)
-    // แปลว่าหน้านี้ไม่ resolve เป็นวิดีโอจริงเลย — เข้าข่าย Incapsula soft-block บน
-    // cloud/datacenter IP (หน้าโหลดได้ปกติแต่ SSR/API content ไม่มา) ไม่ใช่ความผิดของเว็บ
-    // หรือ test — skip แทนที่จะให้ assertion ด้านล่าง fail แบบเข้าใจผิดว่าเป็นบั๊กจริง
-    if (!first.videoId || first.videoId === 'short') {
-      await skipWithEvidence(
-        page,
-        'หน้า SFV Player (short)',
-        `⚠️ หน้า SFV Player ไม่ resolve เป็นวิดีโอจริง (videoId="${first.videoId}") — ` +
-          'เข้าข่าย Incapsula soft-block บน cloud/datacenter IP ไม่ใช่ความผิดของเว็บหรือ test'
-      );
-    }
-
-    items.push(first);
-    seenIds.add(first.videoId);
-    seenUrls.add(first.url);
-    console.log(`  [1] ${first.videoId} | "${first.title}" | type: ${first.type}`);
-
-    // เลื่อนไปเรื่อยๆ จนครบ TARGET_ITEMS
-    while (items.length < TARGET_ITEMS) {
-      const prevUrl = page.url();
-      const moved = await navigateNext(page, prevUrl);
-
-      if (!moved) {
-        console.warn(`  ⚠️  ไม่สามารถเลื่อนวิดีโอถัดไปได้ที่ item ${items.length + 1}`);
-        break;
+    for (let sessionAttempt = 1; sessionAttempt <= 3; sessionAttempt++) {
+      if (sessionAttempt > 1) {
+        console.warn('  ⚠️  SFV feed หยุดก่อนครบ 20 items — reload แล้วลองเริ่ม session ใหม่อีกครั้ง');
+        items.length = 0;
+        seenIds.clear();
+        seenUrls.clear();
       }
 
-      const item = await collectCurrentItem(page);
-      items.push(item);
-      seenIds.add(item.videoId);
-      seenUrls.add(item.url);
-      console.log(`  [${items.length}] ${item.videoId} | "${item.title}" | type: ${item.type}`);
+      // เก็บ item แรก
+      const first = await openResolvedSfvSession(page, `หน้า SFV Player (short) session ${sessionAttempt}`);
+
+      // ถ้า videoId เป็น "short" (literal path segment ของ BASE_URL เอง ไม่ใช่ ID จริง)
+      // แปลว่าหน้านี้ไม่ resolve เป็นวิดีโอจริงเลย — เข้าข่าย Incapsula soft-block บน
+      // cloud/datacenter IP (หน้าโหลดได้ปกติแต่ SSR/API content ไม่มา) ไม่ใช่ความผิดของเว็บ
+      // หรือ test — skip แทนที่จะให้ assertion ด้านล่าง fail แบบเข้าใจผิดว่าเป็นบั๊กจริง
+      if (!isRealShortItem(first)) {
+        await skipWithEvidence(
+          page,
+          'หน้า SFV Player (short)',
+          `⚠️ หน้า SFV Player ไม่ resolve เป็นวิดีโอจริง (videoId="${first.videoId}") — ` +
+            'เข้าข่าย Incapsula soft-block บน cloud/datacenter IP ไม่ใช่ความผิดของเว็บหรือ test'
+        );
+      }
+
+      items.push(first);
+      seenIds.add(first.videoId);
+      seenUrls.add(first.url);
+      console.log(`  [${items.length}] ${first.videoId} | "${first.title}" | type: ${first.type}`);
+
+      // เลื่อนไปเรื่อยๆ จนครบ TARGET_ITEMS
+      while (items.length < TARGET_ITEMS) {
+        const prevUrl = page.url();
+        const moved = await navigateNext(page, prevUrl);
+
+        if (!moved) {
+          console.warn(`  ⚠️  ไม่สามารถเลื่อนวิดีโอถัดไปได้ที่ item ${items.length + 1}`);
+          break;
+        }
+
+        const item = await waitForResolvedVideo(page);
+        items.push(item);
+        seenIds.add(item.videoId);
+        seenUrls.add(item.url);
+        console.log(`  [${items.length}] ${item.videoId} | "${item.title}" | type: ${item.type}`);
+      }
+
+      if (items.length >= TARGET_ITEMS) {
+        break;
+      }
     }
 
     // ── บันทึก JSON ──────────────────────────────────────────────────────────
@@ -148,8 +243,8 @@ test.describe('SFV Player — Short', () => {
 
     // ── assertions ───────────────────────────────────────────────────────────
 
-    // 1. เก็บได้อย่างน้อย 15 items (รองรับกรณี network ช้า)
-    expect(items.length).toBeGreaterThanOrEqual(15);
+    // 1. Story requirement: ต้องเลื่อนได้ครบ 20 items
+    expect(items.length, `ต้องเลื่อน SFV ได้ครบ ${TARGET_ITEMS} items แต่เก็บได้ ${items.length}`).toBe(TARGET_ITEMS);
 
     // 2. video ID ไม่ซ้ำกัน
     const dupIds = items

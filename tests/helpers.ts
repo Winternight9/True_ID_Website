@@ -77,6 +77,7 @@ export async function gotoAndWait(page: Page, url: string, waitMs = 4000, label?
     return;
   }
   await page.waitForTimeout(waitMs);
+  await skipIfBlockedByWAF(page, label || url);
 }
 
 // เวอร์ชันสำหรับจุดที่เรียก page.goto() ตรงๆ (ไม่ผ่าน gotoAndWait) เช่นตอน navigate
@@ -92,6 +93,7 @@ export async function gotoOrSkip(page: Page, url: string, label: string) {
         'บล็อกระดับ network บน cloud/datacenter IP เช่น GitHub Actions runner ไม่ใช่ความผิดของเว็บหรือ test'
     );
   }
+  await skipIfBlockedByWAF(page, label);
 }
 
 export async function saveScreenshot(page: Page, name: string) {
@@ -141,23 +143,25 @@ export async function skipIfBlockedByWAF(page: Page, label: string) {
 }
 
 export async function checkVisible(page: Page, selector: string, label: string) {
+  await skipIfBlockedByWAF(page, label);
   try {
     await expect(page.locator(selector).first()).toBeVisible({ timeout: 8000 });
     console.log(`  ✅ ${label}`);
     return true;
   } catch {
     console.warn(`  ❌ ${label} — not found (selector: ${selector})`);
-    return false;
+    throw new Error(`${label} not found (selector: ${selector})`);
   }
 }
 
 export async function checkText(page: Page, text: string, label: string) {
+  await skipIfBlockedByWAF(page, label);
   try {
     await expect(page.getByText(text, { exact: false }).first()).toBeVisible({ timeout: 8000 });
     console.log(`  ✅ ${label}`);
     return true;
   } catch {
     console.warn(`  ❌ ${label} — text "${text}" not visible`);
-    return false;
+    throw new Error(`${label} text "${text}" not visible`);
   }
 }
