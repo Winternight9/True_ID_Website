@@ -3,6 +3,7 @@ test-results/
 playwright-report/
 screenshots/
 .playwright-browsers/
+.env
 *.log
 *.txt
 .DS_Store

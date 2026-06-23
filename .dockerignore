@@ -1,0 +1,13 @@
+.git
+.github
+.DS_Store
+
+node_modules
+test-results
+playwright-report
+screenshots
+.playwright-browsers
+
+*.log
+*.txt
+npm-debug.log*

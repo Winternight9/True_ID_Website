@@ -19,7 +19,7 @@ try {
   process.exit(1);
 }
 
-const { cases, stats, passCount, flakyCount, failCount, skipCount, wafBlockedCount } = summarize(data);
+const { cases, stories, stats, passCount, flakyCount, failCount, skipCount, wafBlockedCount } = summarize(data);
 
 const lines = [];
 lines.push(`## 🎭 Playwright Test Report — ${new Date(stats.startTime).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`);
@@ -32,13 +32,34 @@ lines.push(
     (wafBlockedCount ? ` · 🛡️ ${wafBlockedCount} WAF/soft-block suspected` : '')
 );
 lines.push('');
-lines.push('| Status | Test case | Group | Duration | Retries |');
-lines.push('|---|---|---|---|---|');
+lines.push('### Story Coverage');
+lines.push('');
+lines.push('| Area | Story | Requirement | Status | Cases | Duration | Notes |');
+lines.push('|---|---|---|---|---:|---:|---|');
+
+for (const s of stories) {
+  const icon = ICON[s.status] || '❔';
+  const notes = [
+    s.flaky ? `${s.flaky} flaky` : '',
+    s.failed ? `${s.failed} failed` : '',
+    s.skipped ? `${s.skipped} skipped` : '',
+    s.wafBlocked ? `${s.wafBlocked} WAF` : '',
+  ].filter(Boolean).join(', ') || '-';
+  lines.push(
+    `| ${s.area} | ${s.story} | ${s.requirement} | ${icon} ${s.status} | ${s.passed + s.flaky}/${s.total} | ${fmtMs(s.durationMs)} | ${notes} |`
+  );
+}
+
+lines.push('');
+lines.push('### Test Case Details');
+lines.push('');
+lines.push('| Status | Area | Requirement | Test case | Duration | Retries |');
+lines.push('|---|---|---|---|---:|---:|');
 
 for (const c of cases) {
   const icon = ICON[c.status] || '❔';
   lines.push(
-    `| ${icon} ${c.status} | ${c.title} | ${c.group} | ${fmtMs(c.durationMs)} | ${c.retries} |`
+    `| ${icon} ${c.status} | ${c.area} | ${c.requirement} | ${c.title} | ${fmtMs(c.durationMs)} | ${c.retries} |`
   );
 }
 
@@ -49,7 +70,9 @@ if (withErrors.length) {
   lines.push('### Failure details');
   lines.push('');
   for (const c of withErrors) {
-    lines.push(`<details><summary>${ICON[c.status] || '❔'} ${c.title}</summary>`);
+    lines.push(`<details><summary>${ICON[c.status] || '❔'} ${c.area} / ${c.requirement}</summary>`);
+    lines.push('');
+    lines.push(`Test: ${c.title}`);
     lines.push('');
     lines.push('```');
     lines.push(c.errorMessage);
@@ -64,7 +87,9 @@ if (skippedCases.length) {
   lines.push('### Skipped details');
   lines.push('');
   for (const c of skippedCases) {
-    lines.push(`<details><summary>${ICON[c.status] || '❔'} ${c.title}</summary>`);
+    lines.push(`<details><summary>${ICON[c.status] || '❔'} ${c.area} / ${c.requirement}</summary>`);
+    lines.push('');
+    lines.push(`Test: ${c.title}`);
     lines.push('');
     lines.push(c.skipReason || 'No skip reason recorded.');
     lines.push('');
@@ -84,7 +109,7 @@ if (wafBlockedCases.length) {
   );
   lines.push('');
   for (const c of wafBlockedCases) {
-    lines.push(`- **${c.title}** — ${c.skipReason || c.errorMessage || 'No reason recorded.'}`);
+    lines.push(`- **${c.area} / ${c.requirement}** — ${c.skipReason || c.errorMessage || 'No reason recorded.'}`);
   }
 }
 

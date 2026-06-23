@@ -1,0 +1,18 @@
+services:
+  trueid-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: trueid-playwright:local
+    environment:
+      CI: "true"
+      TZ: Asia/Bangkok
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:""}
+      DISCORD_DEBUG: 1
+      DISCORD_REQUIRED: 1
+      DISCORD_ATTACH_REPORT: 1
+    volumes:
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
+      - ./screenshots:/app/screenshots
+    command: sh scripts/run-docker-tests.sh
